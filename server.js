@@ -46,17 +46,17 @@ app.get("/api/test-deliver/:orderId", requireAuth, async (req, res) => {
   try {
     const { orderId } = req.params;
     console.log(`[MANUAL TEST] Triggering delivery for: ${orderId}`);
-    
+
     const order = await Order.findOne({ orderId });
     if (!order) return res.status(404).json({ error: "Order not found" });
 
     await store.markOrderPaid(orderId);
     const result = await store.deliverCoupons(orderId);
-    
+
     if (result.outOfStock) {
       return res.json({ status: "out_of_stock", message: "Delivery logic worked but product is out of stock" });
     }
-    
+
     const couponsText = result.coupons.map(c => `\`${c}\``).join(", ");
     await bot.sendMessage(order.userId, `🎁 *Manual Delivery (Test)*\n\nYour Coupon(s): ${couponsText}`, { parse_mode: "Markdown" });
 
@@ -110,7 +110,7 @@ function startHeartbeat() {
   const url = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}/health`;
 
   console.log(`💓 Heartbeat started: Pinging ${url} every 12s`);
-  
+
   setInterval(() => {
     protocol.get(url, (res) => {
       // console.log(`[HEARTBEAT] Pinged ${url} - Status: ${res.statusCode}`);
@@ -315,24 +315,24 @@ app.post("/api/orders/:orderId/deliver", requireAuth, async (req, res) => {
   try {
     const { orderId } = req.params;
     console.log(`[FORCE DELIVER] Manual trigger for: ${orderId}`);
-    
+
     // First, mark as paid if it's still pending
     await store.markOrderPaid(orderId);
-    
+
     // Deliver coupons
     const result = await store.deliverCoupons(orderId);
-    
+
     if (result.outOfStock) {
       return res.status(400).json({ error: "Product is out of stock. Cannot deliver." });
     }
-    
+
     // Find order to get userId and productId
     const order = await Order.findOne({ orderId }).lean();
     if (order && order.coupons && order.coupons.length > 0) {
       const product = await store.getProduct(order.productId);
       const productName = product ? product.name : order.productId;
       const couponsText = order.coupons.map(c => `\`${c}\``).join("\n");
-      
+
       // Send codes to user via bot
       await bot.sendMessage(
         order.userId,
@@ -343,7 +343,7 @@ app.post("/api/orders/:orderId/deliver", requireAuth, async (req, res) => {
         { parse_mode: "Markdown" }
       ).catch(e => console.error("[BOT] Failed to send manual delivery message:", e.message));
     }
-    
+
     res.json({ success: true, coupons: result.coupons });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -391,7 +391,7 @@ app.use((_req, res) => {
     console.log(`║  🏪 Golu Offers Webhook LIVE 🚀  ║`);
     console.log(`║  Dashboard: localhost:${PORT}/dashboard ║`);
     console.log(`╚══════════════════════════════════╝\n`);
-    
+
     startHeartbeat(); // Start self-pinging every 12s
   });
 })();

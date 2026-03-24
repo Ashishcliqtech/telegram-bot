@@ -130,12 +130,73 @@ bot.on("error", (err) => {
 });
 
 // ─────────────────────────────────────────────────────────
+// RENDER KEEP-ALIVE (EXPRESS SERVER + HEARTBEAT)
+// ─────────────────────────────────────────────────────────
+const express = require("express");
+const https = require("https");
+const http = require("http");
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.get("/health", (req, res) => {
+  res.json({
+    status: "ok",
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+  });
+});
+
+function startHeartbeat() {
+  const externalUrl = process.env.RENDER_EXTERNAL_URL;
+  const serviceName = process.env.RENDER_SERVICE_NAME;
+  
+  // Determine URL to ping
+  let urlToPing;
+  if (externalUrl) {
+    urlToPing = externalUrl;
+  } else if (serviceName) {
+    urlToPing = `https://${serviceName}.onrender.com`;
+  } else {
+    urlToPing = `http://localhost:${PORT}`;
+  }
+
+  // Ensure it has /health route
+  if (!urlToPing.endsWith("/health")) {
+    urlToPing = `${urlToPing}/health`;
+  }
+
+  const protocol = urlToPing.startsWith("https") ? https : http;
+
+  console.log(`[HEARTBEAT] ❤️ Auto-ping started targeting: ${urlToPing} every 4 minutes`);
+
+  // Ping every 4 minutes (240,000 ms)
+  setInterval(() => {
+    protocol.get(urlToPing, (res) => {
+      if (res.statusCode === 200) {
+        console.log(`[HEARTBEAT] ✅ Keep-alive ping successful at ${new Date().toISOString()}`);
+      } else {
+        console.log(`[HEARTBEAT] ⚠️ Ping returned status code: ${res.statusCode}`);
+      }
+    }).on("error", (err) => {
+      console.error(`[HEARTBEAT] ❌ Ping failed: ${err.message}`);
+    });
+  }, 240000);
+}
+
+// ─────────────────────────────────────────────────────────
 // STARTUP
 // ─────────────────────────────────────────────────────────
 
 (async () => {
   await db.connect();
   await store.initCatalog();
+
+  // Start Express server for keep-alive
+  app.listen(PORT, () => {
+    console.log(`[SERVER] 🟢 Express server running on port ${PORT}`);
+    startHeartbeat();
+  });
 
   console.log(`\n╔══════════════════════════════════╗`);
   console.log(`║  ${config.SHOP_NAME} Bot is LIVE! 🚀   ║`);

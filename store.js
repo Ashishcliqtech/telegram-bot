@@ -12,54 +12,24 @@ const User = require("./models/User");
 // Inserted once if the products collection is empty.
 const SEED_CATALOG = [
   {
-    id: "MYNTRA_99",
+    id: "MYNTRA_100",
     name: "Myntra ₹100 Off Coupon",
-    description: "Flat ₹100 off on orders above ₹399",
-    price: 9900,
+    description: "Flat ₹100 off",
+    price: 3000,
     emoji: "👗",
     category: "myntra",
     categoryLabel: "👗 Myntra",
     pool: ["MYNTRA2024A", "MYNTRA2024B", "MYNTRA2024C"],
   },
   {
-    id: "MYNTRA_199",
-    name: "Myntra ₹200 Off Coupon",
-    description: "Flat ₹200 off on orders above ₹799",
-    price: 19900,
+    id: "MYNTRA_150",
+    name: "Myntra ₹150 Off Coupon",
+    description: "Flat ₹150 off on orders above ₹499",
+    price: 4000,
     emoji: "🛍️",
     category: "myntra",
     categoryLabel: "👗 Myntra",
     pool: ["MYN200DEAL1", "MYN200DEAL2"],
-  },
-  {
-    id: "AMAZON_149",
-    name: "Amazon ₹150 Off Coupon",
-    description: "₹150 off on Amazon Fresh & Pantry",
-    price: 14900,
-    emoji: "📦",
-    category: "amazon",
-    categoryLabel: "📦 Amazon",
-    pool: ["AMZ150FRESH1", "AMZ150FRESH2", "AMZ150FRESH3"],
-  },
-  {
-    id: "SWIGGY_49",
-    name: "Swiggy ₹60 Off Coupon",
-    description: "₹60 off on first 3 orders",
-    price: 4900,
-    emoji: "🍔",
-    category: "swiggy",
-    categoryLabel: "🍔 Swiggy",
-    pool: ["SWG60OFF1", "SWG60OFF2", "SWG60OFF3", "SWG60OFF4"],
-  },
-  {
-    id: "ZOMATO_49",
-    name: "Zomato ₹75 Off Coupon",
-    description: "₹75 off on orders above ₹199",
-    price: 4900,
-    emoji: "🍕",
-    category: "zomato",
-    categoryLabel: "🍕 Zomato",
-    pool: ["ZOM75DEAL1", "ZOM75DEAL2"],
   },
 ];
 
@@ -223,7 +193,7 @@ async function deliverCoupons(orderId) {
 
   const updated = await Product.findOneAndUpdate(
     { id: order.productId, pool: { $all: couponsToDeliver } },
-    { 
+    {
       $pullAll: { pool: couponsToDeliver },
       $inc: { sold: quantity }
     },
@@ -284,7 +254,7 @@ async function getAdminStats() {
   ]);
 
   const deliveredOrders = await Order.find({ status: "delivered" }).lean();
-  
+
   // Revenue = sum of order.totalPrice for all delivered orders
   const totalRevenuePaise = deliveredOrders.reduce((sum, o) => sum + (o.totalPrice || 0), 0);
 

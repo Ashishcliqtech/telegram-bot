@@ -36,23 +36,29 @@ async function handleBuyProduct(bot, chatId, productId, store, formatPrice) {
       quantity: 1,
     });
 
+    const fs = require('fs');
+    const path = require('path');
+    
+    // Path to the static QR code in the root folder
+    const qrPath = path.join(__dirname, '..', '..', 'qr_code.jpeg');
+
     const payText =
       `🛒 *Order Created*\n\n` +
       `📦 *Coupon:* ${product.name}\n` +
       `💰 *Amount:* ${formatPrice(product.price)}\n\n` +
       `━━━━━━━━━━━━━━━━━━━━━━\n` +
-      `🚩 *Pay via UPI:*\n` +
-      `\`${config.UPI_ID}\`\n\n` +
       `🔖 *Order Number:* \`${order.orderId}\`\n` +
       `━━━━━━━━━━━━━━━━━━━━━━\n\n` +
       `💡 *Instructions:*\n` +
-      `1. Open any UPI app (GPay, PhonePe, Paytm)\n` +
-      `2. Pay the exact amount to the UPI ID above\n` +
-      `3. Copy the 12-digit **UTR Number** from the payment details\n` +
-      `4. Click the button below to submit your UTR\n\n` +
+      `1. Scan the QR code above.\n` +
+      `2. Pay the exact amount.\n` +
+      `3. Copy the 12-digit **UTR Number** from your banking app.\n` +
+      `4. Click the button below to submit your UTR.\n\n` +
       `After payment click **Enter UTR Number**`;
 
-    await bot.sendMessage(chatId, payText, {
+    // Create a readable stream for the local photo
+    await bot.sendPhoto(chatId, fs.createReadStream(qrPath), {
+      caption: payText,
       parse_mode: "Markdown",
       reply_markup: {
         inline_keyboard: [

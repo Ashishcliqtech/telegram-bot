@@ -20,6 +20,16 @@ async function handleMessage(bot, msg, store, utils, components) {
       return bot.sendMessage(chatId, "❌ *Invalid UTR!* Please enter a valid 12-digit numeric UTR number.", { parse_mode: "Markdown" });
     }
 
+    // Check for duplicate UTR
+    const duplicateUtr = await Order.exists({ 
+      utrNumber: utr, 
+      status: { $in: ["verification", "paid", "delivered"] } 
+    });
+
+    if (duplicateUtr) {
+      return bot.sendMessage(chatId, "❌ *Duplicate UTR!* This UTR number has already been used or is currently pending verification.", { parse_mode: "Markdown" });
+    }
+
     const orderId = state.orderId;
     delete userStates[chatId];
 

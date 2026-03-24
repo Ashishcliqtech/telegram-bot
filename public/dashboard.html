@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Golu Offers | Admin Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --accent: #8b5cf6;
+      --accent-hover: #7c3aed;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: #334155;
+      --success: #10b981;
+      --error: #ef4444;
+      --pending: #f59e0b;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    /* Auth Overlay */
+    #auth-overlay {
+      position: fixed; inset: 0; background: var(--bg); z-index: 1000;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .auth-card {
+      background: var(--card-bg); padding: 2rem; border-radius: 12px;
+      width: 100%; max-width: 400px; text-align: center; border: 1px solid var(--border);
+    }
+    .auth-card h2 { margin-bottom: 1.5rem; color: var(--accent); }
+    input[type="password"] {
+      width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border);
+      background: #0f172a; color: white; margin-bottom: 1rem;
+    }
+    button {
+      width: 100%; padding: 0.75rem; border-radius: 8px; border: none;
+      background: var(--accent); color: white; font-weight: 600; cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover { background: var(--accent-hover); }
+
+    /* Main Layout */
+    .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+    .logo { font-size: 1.5rem; font-weight: 700; color: var(--accent); }
+    .logout-btn { width: auto; padding: 0.5rem 1rem; font-size: 0.875rem; background: transparent; border: 1px solid var(--border); }
+
+    /* Stats Grid */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+    .stat-card { background: var(--card-bg); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border); }
+    .stat-label { font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.5rem; }
+    .stat-value { font-size: 1.5rem; font-weight: 700; }
+
+    /* Tabs */
+    .tabs { display: flex; gap: 1rem; border-bottom: 1px solid var(--border); margin-bottom: 1.5rem; }
+    .tab { padding: 0.75rem 1rem; cursor: pointer; color: var(--text-muted); border-bottom: 2px solid transparent; }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    /* Tables */
+    .table-container { background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border); overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th { padding: 1rem; border-bottom: 1px solid var(--border); color: var(--text-muted); font-size: 0.875rem; }
+    td { padding: 1rem; border-bottom: 1px solid var(--border); }
+    .badge { padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+    .badge-success { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+    .badge-pending { background: rgba(245, 158, 11, 0.1); color: var(--pending); }
+    .badge-error { background: rgba(239, 68, 68, 0.1); color: var(--error); }
+
+    /* Actions */
+    .actions { display: flex; gap: 0.5rem; }
+    .action-btn { padding: 0.4rem 0.8rem; border-radius: 6px; border: 1px solid var(--border); font-size: 0.75rem; background: #0f172a; color: white; cursor: pointer; }
+    .action-btn:hover { border-color: var(--accent); }
+
+    /* Modals */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 100;
+      display: none; align-items: center; justify-content: center;
+    }
+    .modal { background: var(--card-bg); padding: 2rem; border-radius: 12px; width: 100%; max-width: 500px; border: 1px solid var(--border); }
+    .modal h3 { margin-bottom: 1rem; }
+    textarea { width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border); background: #0f172a; color: white; height: 150px; margin-bottom: 1rem; font-family: monospace; }
+  </style>
+</head>
+<body>
+
+  <div id="auth-overlay">
+    <div class="auth-card">
+      <h2>🏪 Golu Admin</h2>
+      <input type="password" id="secret-input" placeholder="Enter Admin Secret">
+      <button onclick="login()">Access Dashboard</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <header>
+      <div class="logo">GOLU OFFERS DASHBOARD</div>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </header>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total Revenue</div>
+        <div class="stat-value" id="stat-revenue">₹0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Orders</div>
+        <div class="stat-value" id="stat-orders">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Stock Units</div>
+        <div class="stat-value" id="stat-stock">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Users</div>
+        <div class="stat-value" id="stat-users">0</div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('products')">Inventory</div>
+      <div class="tab" onclick="switchTab('orders')">Recent Orders</div>
+    </div>
+
+    <div id="products-view">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h3>Product Inventory</h3>
+        <button onclick="showAddProductModal()" style="width: auto; padding: 0.5rem 1rem;">+ Add Product</button>
+      </div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Product</th>
+              <th>Price</th>
+              <th>Stock</th>
+              <th>Sold</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="products-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="orders-view" style="display: none;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h3>Recent Orders</h3>
+        <select id="order-filter" onchange="fetchOrders()" style="padding: 0.5rem; border-radius: 6px; background: var(--card-bg); border: 1px solid var(--border); color: white;">
+          <option value="">All Orders</option>
+          <option value="delivered">Delivered</option>
+          <option value="paid">Paid (Not Delivered)</option>
+          <option value="pending">Pending</option>
+          <option value="failed">Failed</option>
+        </select>
+      </div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>User ID</th>
+              <th>Product</th>
+              <th>Date</th>
+              <th>Status</th>
+              <th>Coupon</th>
+            </tr>
+          </thead>
+          <tbody id="orders-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Coupon Modal -->
+  <div class="modal-overlay" id="coupon-modal">
+    <div class="modal">
+      <h3 id="coupon-modal-title">Add Coupons</h3>
+      <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1rem;">Paste coupon codes here, one per line.</p>
+      <textarea id="coupon-textarea" placeholder="CODE123&#10;DEAL456"></textarea>
+      <div style="display: flex; gap: 1rem;">
+        <button onclick="closeModal('coupon-modal')" style="background: transparent; border: 1px solid var(--border);">Cancel</button>
+        <button id="coupon-submit-btn">Save Coupons</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let DASHBOARD_SECRET = localStorage.getItem('golu_auth');
+    let currentProductId = null;
+
+    if (DASHBOARD_SECRET) {
+      document.getElementById('auth-overlay').style.display = 'none';
+      init();
+    }
+
+    function login() {
+      const secret = document.getElementById('secret-input').value;
+      if (!secret) return alert('Enter secret');
+      localStorage.setItem('golu_auth', secret);
+      location.reload();
+    }
+
+    function logout() {
+      localStorage.removeItem('golu_auth');
+      location.reload();
+    }
+
+    async function apiFetch(endpoint, method = 'GET', body = null) {
+      const opts = {
+        method,
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('golu_auth')}`,
+          'Content-Type': 'application/json'
+        }
+      };
+      if (body) opts.body = JSON.stringify(body);
+      
+      const res = await fetch(endpoint, opts);
+      if (res.status === 401) {
+        alert('Session expired or unauthorized');
+        logout();
+        return;
+      }
+      return res.json();
+    }
+
+    function init() {
+      fetchStats();
+      fetchProducts();
+    }
+
+    async function fetchStats() {
+      const stats = await apiFetch('/api/stats');
+      if (!stats) return;
+      document.getElementById('stat-revenue').textContent = `₹${stats.totalRevenue.toLocaleString()}`;
+      document.getElementById('stat-orders').textContent = stats.totalOrders;
+      document.getElementById('stat-stock').textContent = stats.totalStock;
+      document.getElementById('stat-users').textContent = stats.totalUsers;
+    }
+
+    async function fetchProducts() {
+      const products = await apiFetch('/api/products');
+      if (!products) return;
+      const tbody = document.getElementById('products-tbody');
+      tbody.innerHTML = products.map(p => `
+        <tr>
+          <td><code style="color: var(--accent)">${p.id}</code></td>
+          <td>${p.emoji} ${p.name}</td>
+          <td>₹${p.price / 100}</td>
+          <td style="color: ${p.stock < 5 ? 'var(--error)' : 'var(--text)'}">${p.stock}</td>
+          <td>${p.sold || 0}</td>
+          <td><span class="badge ${p.active ? 'badge-success' : 'badge-error'}">${p.active ? 'Active' : 'Hidden'}</span></td>
+          <td class="actions">
+            <button class="action-btn" onclick="showAddCoupons('${p.id}', '${p.name}')">+ Stock</button>
+            <button class="action-btn" onclick="toggleActive('${p.id}', ${p.active})">${p.active ? 'Hide' : 'Show'}</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function fetchOrders() {
+      const status = document.getElementById('order-filter').value;
+      const data = await apiFetch(`/api/orders?status=${status}`);
+      if (!data) return;
+      const tbody = document.getElementById('orders-tbody');
+      tbody.innerHTML = data.orders.map(o => `
+        <tr>
+          <td style="font-size: 0.75rem; color: var(--text-muted)">${o.orderId}</td>
+          <td style="font-size: 0.75rem">${o.userId}</td>
+          <td>${o.productId}</td>
+          <td style="font-size: 0.75rem">${new Date(o.createdAt).toLocaleString()}</td>
+          <td>
+            <span class="badge badge-${o.status}">${o.status.toUpperCase()}</span>
+            ${o.status === 'pending' || o.status === 'paid' ? `<button class="action-btn" style="margin-left: 0.5rem; font-size: 0.65rem;" onclick="forceDeliver('${o.orderId}')">Force Deliver</button>` : ''}
+          </td>
+          <td><code>${o.coupon || '—'}</code></td>
+        </tr>
+      `).join('');
+    }
+
+    async function forceDeliver(orderId) {
+      if (!confirm(`Manually fulfill order ${orderId}? This will mark it as paid and deliver a coupon.`)) return;
+      const res = await apiFetch(`/api/orders/${orderId}/deliver`, 'POST');
+      if (res && res.success) {
+        alert('Order delivered! The coupon code has been sent to the user.');
+        fetchOrders();
+        fetchStats();
+      } else {
+        alert('Failed: ' + (res?.error || 'Unknown error'));
+      }
+    }
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      event.target.classList.add('active');
+      
+      document.getElementById('products-view').style.display = tab === 'products' ? 'block' : 'none';
+      document.getElementById('orders-view').style.display = tab === 'orders' ? 'block' : 'none';
+      
+      if (tab === 'orders') fetchOrders();
+      if (tab === 'products') fetchProducts();
+    }
+
+    function showAddCoupons(id, name) {
+      currentProductId = id;
+      document.getElementById('coupon-modal-title').textContent = `Stock Up: ${name}`;
+      document.getElementById('coupon-textarea').value = '';
+      document.getElementById('coupon-modal').style.display = 'flex';
+    }
+
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+    document.getElementById('coupon-submit-btn').onclick = async () => {
+      const text = document.getElementById('coupon-textarea').value;
+      const coupons = text.split('\n').map(s => s.trim()).filter(Boolean);
+      if (coupons.length === 0) return alert('Enter coupons');
+      
+      const res = await apiFetch(`/api/products/${currentProductId}/coupons`, 'POST', { coupons });
+      if (res) {
+        alert(`Successfully added ${coupons.length} coupons!`);
+        closeModal('coupon-modal');
+        fetchProducts();
+        fetchStats();
+      }
+    };
+
+    async function toggleActive(id, current) {
+      const res = await apiFetch(`/api/products/${id}`, 'PATCH', { active: !current });
+      if (res) fetchProducts();
+    }
+
+  </script>
+</body>
+</html>

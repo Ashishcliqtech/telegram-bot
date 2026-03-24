@@ -1,0 +1,28 @@
+{
+  "name": "telegram-bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "concurrently \"node index.js\" \"node server.js\"",
+    "bot": "node index.js",
+    "server": "node server.js",
+    "dev": "concurrently \"node index.js\" \"node server.js\"",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "mongoose": "^9.3.2",
+    "node-telegram-bot-api": "^0.67.0",
+    "razorpay": "^2.9.6"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

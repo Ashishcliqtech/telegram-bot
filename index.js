@@ -318,24 +318,38 @@ function startHeartbeat() {
     return;
   }
 
-  // Ensure URL starts with http/https
   if (!url.startsWith("http")) {
     url = `https://${url}`;
   }
 
+  console.log(`🚀 Heartbeat service starting. Interval: 14m. Target: ${url}/health`);
 
-  // Ping every 10 minutes (600,000 ms)
-  // Render's free tier spins down after 15 minutes of inactivity.
-  setInterval(() => {
+  const ping = () => {
     const protocol = url.startsWith("https") ? https : http;
-    protocol.get(`${url}/health`, (res) => {
-      console.log(`💓 Heartbeat: [${new Date().toISOString()}] - Status: ${res.statusCode}`);
+    const pingUrl = `${url.endsWith('/') ? url.slice(0, -1) : url}/health`;
+
+    const req = protocol.get(pingUrl, (res) => {
+      console.log(`💓 Heartbeat Success: [${new Date().toISOString()}] - Status: ${res.statusCode}`);
+      if (res.statusCode !== 200) {
+        logger.error(`💔 Heartbeat Alert: Received unexpected status ${res.statusCode}`);
+      }
     }).on("error", (err) => {
       console.error(`💔 Heartbeat Failed: ${err.message}`);
+      logger.error(`[HEARTBEAT ERROR] ${err.message}`);
     });
-  }, 10 * 60 * 1000);
 
-  console.log("🚀 Heartbeat service started.");
+    // Timeout handling
+    req.setTimeout(15000, () => {
+      req.destroy();
+      console.error("💔 Heartbeat Timeout: Request took too long.");
+    });
+  };
+
+  // Run immediately on start
+  ping();
+
+  // Then every 14 minutes
+  setInterval(ping, 14 * 60 * 1000);
 }
 
 

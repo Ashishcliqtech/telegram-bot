@@ -25,11 +25,13 @@ async function handleAdminApproval(bot, orderId, store, adminMessageId = null) {
 
   await bot.sendMessage(
     order.userId,
-    `🎉 *Payment Verified*\n\n` +
-    `Your Coupon Code(s):\n\n` +
-    `${couponsText}\n\n` +
-    `Thank you for using *Coupon Store*!\n\n` +
-    `🤝 Please join https://t.me/earnxupdates for further updates`,
+    `🎉 *Payment Verified*
+
+Your Coupon Code(s):
+
+${couponsText}
+
+Thank you for using *Coupon Store*!`,
     { parse_mode: "Markdown" }
   );
 
